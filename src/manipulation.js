@@ -205,7 +205,12 @@ function domManip( collection, args, callback, ignored ) {
 							if ( node.hasAttribute && node.hasAttribute( "nonce" ) ) {
 								nonce = node.getAttribute( "nonce" );
 							}
-							DOMEval( node.textContent.replace( rcleanScript, "" ), doc, node, nonce );
+							DOMEval(
+                node.textContent.replace( rcleanScript, "" ),
+                doc,
+                node,
+                nonce
+              );
 						}
 					}
 				}
