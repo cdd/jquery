@@ -3,15 +3,30 @@ define( [
 ], function( document ) {
 	"use strict";
 
-	function DOMEval( code, doc, nonce ) {
+	var preservedScriptAttributes = {
+		type: true,
+		src: true,
+		noModule: true
+	};
+
+	function DOMEval( code, doc, node, nonce ) {
 		doc = doc || document;
-		var script = doc.createElement( "script" );
+
+		var i,
+			script = doc.createElement( "script" );
 
 		if ( nonce ) {
 			script.setAttribute( "nonce", nonce );
 		}
 
 		script.text = code;
+		if ( node ) {
+			for ( i in preservedScriptAttributes ) {
+				if ( node[ i ] ) {
+					script[ i ] = node[ i ];
+				}
+			}
+		}
 		doc.head.appendChild( script ).parentNode.removeChild( script );
 	}
 
