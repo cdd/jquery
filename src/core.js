@@ -279,7 +279,8 @@ jQuery.extend( {
 
 	// Evaluates a script in a global context
 	globalEval: function( code ) {
-		DOMEval( code );
+    var nonce = jQuery( "script" ).attr( "nonce" );
+		DOMEval( code, undefined, nonce );
 	},
 
 	// Convert dashed to camelCase; used by the css and data modules
