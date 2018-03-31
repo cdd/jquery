@@ -9,7 +9,7 @@
  * Released under the MIT license
  * https://jquery.org/license
  *
- * Date: 2018-03-30T23:38Z
+ * Date: 2018-03-31T04:29Z
  */
 ( function( global, factory ) {
 
@@ -346,7 +346,10 @@ jQuery.extend( {
 
 	// Evaluates a script in a global context
 	globalEval: function( code ) {
-    var nonce = jQuery( "script" ).attr( "nonce" );
+    var nonce = jQuery( "script" ).toArray( ).find( function( el ) {
+      return el.getAttribute( "nonce" );
+    } ).getAttribute( "nonce" );
+
 		DOMEval( code, undefined, undefined, nonce );
 	},
 
