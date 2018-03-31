@@ -407,7 +407,7 @@ QUnit.test( "isXMLDoc - XML", function( assert ) {
 } );
 
 QUnit.test( "jQuery('html')", function( assert ) {
-	assert.expect( 18 );
+	assert.expect( 19 );
 
 	var s, div, j;
 
@@ -429,6 +429,9 @@ QUnit.test( "jQuery('html')", function( assert ) {
 	assert.ok( jQuery( "<link rel='stylesheet'/>" )[ 0 ], "Creating a link" );
 
 	assert.ok( !jQuery( "<script/>" )[ 0 ].parentNode, "Create a script" );
+
+	jQuery( "body" ).append( "<script nonce='test' id='nonceCreatedTest' />" );
+	assert.equal( jQuery( "#nonceCreatedTest" ).attr( "nonce" ), "test", "Ensure the nonce attribute is preserved for CSP" );
 
 	assert.ok( jQuery( "<input/>" ).attr( "type", "hidden" ), "Create an input and set the type." );
 

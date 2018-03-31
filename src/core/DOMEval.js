@@ -9,11 +9,16 @@ define( [
 		noModule: true
 	};
 
-	function DOMEval( code, doc, node ) {
+	function DOMEval( code, doc, node, nonce ) {
 		doc = doc || document;
 
 		var i,
 			script = doc.createElement( "script" );
+
+		if ( nonce && nonce !== "" ) {
+      script.setAttribute( "data-nonce", nonce );
+			script.setAttribute( "nonce", nonce );
+		}
 
 		script.text = code;
 		if ( node ) {

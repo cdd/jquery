@@ -240,7 +240,12 @@ jQuery.extend( {
 
 	// Evaluates a script in a global context
 	globalEval: function( code ) {
-		DOMEval( code );
+    var nonce = jQuery( "script" ).toArray( ).find( function( el ) {
+      var nonce = el.getAttribute( "nonce" );
+      return nonce && nonce !== "";
+    } ).getAttribute( "nonce" );
+
+		DOMEval( code, undefined, undefined, nonce );
 	},
 
 	each: function( obj, callback ) {
