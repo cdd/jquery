@@ -6,8 +6,7 @@ define( [
 	var preservedScriptAttributes = {
 		type: true,
 		src: true,
-		noModule: true,
-    nonce: true
+		noModule: true
 	};
 
 	function DOMEval( code, doc, node, nonce ) {

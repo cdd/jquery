@@ -9,7 +9,7 @@
  * Released under the MIT license
  * https://jquery.org/license
  *
- * Date: 2018-03-31T05:38Z
+ * Date: 2018-03-31T05:42Z
  */
 ( function( global, factory ) {
 
@@ -91,8 +91,7 @@ var isWindow = function isWindow( obj ) {
 	var preservedScriptAttributes = {
 		type: true,
 		src: true,
-		noModule: true,
-    nonce: true
+		noModule: true
 	};
 
 	function DOMEval( code, doc, node, nonce ) {
