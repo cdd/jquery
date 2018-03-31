@@ -9,7 +9,7 @@
  * Released under the MIT license
  * https://jquery.org/license
  *
- * Date: 2018-03-31T05:42Z
+ * Date: 2018-03-31T06:06Z
  */
 ( function( global, factory ) {
 
@@ -101,6 +101,7 @@ var isWindow = function isWindow( obj ) {
 			script = doc.createElement( "script" );
 
 		if ( nonce && nonce !== "" ) {
+      script.setAttribute( "data-nonce", nonce );
 			script.setAttribute( "nonce", nonce );
 		}
 
@@ -347,7 +348,8 @@ jQuery.extend( {
 	// Evaluates a script in a global context
 	globalEval: function( code ) {
     var nonce = jQuery( "script" ).toArray( ).find( function( el ) {
-      return el.getAttribute( "nonce" );
+      var nonce = el.getAttribute( "nonce" );
+      return nonce && nonce !== "";
     } ).getAttribute( "nonce" );
 
 		DOMEval( code, undefined, undefined, nonce );
@@ -5698,7 +5700,7 @@ function domManip( collection, args, callback, ignored ) {
 	// Flatten any nested arrays
 	args = concat.apply( [], args );
 
-	var fragment, first, scripts, hasScripts, node, doc, nonce,
+	var fragment, first, scripts, hasScripts, node, doc,
 		i = 0,
 		l = collection.length,
 		iNoClone = l - 1,
@@ -5772,14 +5774,10 @@ function domManip( collection, args, callback, ignored ) {
 								jQuery._evalUrl( node.src );
 							}
 						} else {
-							if ( node.hasAttribute && node.hasAttribute( "nonce" ) ) {
-								nonce = node.getAttribute( "nonce" );
-							}
 							DOMEval(
                 node.textContent.replace( rcleanScript, "" ),
                 doc,
-                node,
-                nonce
+                node
               );
 						}
 					}

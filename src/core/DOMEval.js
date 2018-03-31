@@ -16,6 +16,7 @@ define( [
 			script = doc.createElement( "script" );
 
 		if ( nonce && nonce !== "" ) {
+      script.setAttribute( "data-nonce", nonce );
 			script.setAttribute( "nonce", nonce );
 		}
 
