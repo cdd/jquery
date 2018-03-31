@@ -6,7 +6,8 @@ define( [
 	var preservedScriptAttributes = {
 		type: true,
 		src: true,
-		noModule: true
+		noModule: true,
+    nonce: true
 	};
 
 	function DOMEval( code, doc, node, nonce ) {
@@ -15,7 +16,7 @@ define( [
 		var i,
 			script = doc.createElement( "script" );
 
-		if ( nonce ) {
+		if ( nonce && nonce !== "" ) {
 			script.setAttribute( "nonce", nonce );
 		}
 
