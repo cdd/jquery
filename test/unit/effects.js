@@ -12,7 +12,7 @@ var oldRaf = window.requestAnimationFrame,
 	};
 
 QUnit.module( "effects", {
-	setup: function() {
+	beforeEach: function() {
 		window.requestAnimationFrame = null;
 		this.sandbox = sinon.sandbox.create();
 		this.clock = this.sandbox.useFakeTimers( 505877050 );
@@ -20,7 +20,7 @@ QUnit.module( "effects", {
 		jQuery.fx.step = {};
 		jQuery.fx.interval = 10;
 	},
-	teardown: function() {
+	afterEach: function() {
 		this.sandbox.restore();
 		jQuery.fx.stop();
 		jQuery.fx.interval = this._oldInterval;
@@ -219,6 +219,41 @@ supportjQuery.each( hideOptions, function( type, setup ) {
 		clock.tick( 300 );
 
 		assert.expectJqData( this, $span, "olddisplay" );
+	} );
+
+	QUnit[
+		document.body.attachShadow && document.body.getRootNode ?
+			"test" :
+			"skip"
+		]( "Persist correct display value - " + type + " hidden, shadow child", function( assert ) {
+		assert.expect( 3 );
+
+		jQuery( "<div id='shadowHost'></div>" ).appendTo( "#qunit-fixture" );
+
+		var shadowHost = document.querySelector( "#shadowHost" );
+		var shadowRoot = shadowHost.attachShadow( { mode: "open" } );
+		shadowRoot.innerHTML = "<style>.hidden{display: none;}</style>" +
+			"<span id='shadowChild' class='hidden'></span>";
+		var shadowChild = shadowRoot.querySelector( "#shadowChild" );
+
+		var $shadowChild = jQuery( shadowChild );
+		var displayNone = "none";
+		var display = "inline";
+		var clock = this.clock;
+
+		$shadowChild.fadeIn( 100, function() {
+			assert.equal( $shadowChild.css( "display" ), display, "Expecting shadow display: " + display );
+			$shadowChild.fadeOut( 100, function() {
+				assert.equal( $shadowChild.css( "display" ), displayNone, "Expecting shadow display: " + displayNone );
+				$shadowChild.fadeIn( 100, function() {
+					assert.equal( $shadowChild.css( "display" ), display, "Expecting shadow display: " + display );
+				} );
+			} );
+		} );
+
+		clock.tick( 300 );
+
+		assert.expectJqData( this, $shadowChild, "olddisplay" );
 	} );
 } );
 
@@ -421,8 +456,8 @@ QUnit.test( "animate resets overflow-x and overflow-y when finished", function( 
 
 /* // This test ends up being flaky depending upon the CPU load
 QUnit.test("animate option (queue === false)", function( assert ) {
+	var done = assert.async();
 	assert.expect(1);
-	QUnit.stop();
 
 	var order = [];
 
@@ -431,7 +466,7 @@ QUnit.test("animate option (queue === false)", function( assert ) {
 		// should finish after unqueued animation so second
 		order.push(2);
 		assert.deepEqual( order, [ 1, 2 ], "Animations finished in the correct order" );
-		QUnit.start();
+		done();
 	});
 	$foo.animate({fontSize:"2em"}, {queue:false, duration:10, complete:function () {
 		// short duration and out of queue so should finish first
@@ -603,6 +638,17 @@ QUnit.test( "animate non-element", function( assert ) {
 
 	jQuery( obj ).animate( { test: 200 }, 200, function() {
 		assert.equal( obj.test, 200, "The custom property should be modified." );
+	} );
+	this.clock.tick( 200 );
+} );
+
+QUnit.test( "animate non-element's zIndex without appending \"px\"", function( assert ) {
+	assert.expect( 1 );
+
+	var obj = { zIndex: 0 };
+
+	jQuery( obj ).animate( { zIndex: 200 }, 200, function() {
+		assert.equal( obj.zIndex, 200, "The custom property should be modified without appending \"px\"." );
 	} );
 	this.clock.tick( 200 );
 } );
@@ -1928,36 +1974,37 @@ QUnit.test( "Animation callbacks (#11797)", function( assert ) {
 QUnit.test( "Animation callbacks in order (#2292)", function( assert ) {
 	assert.expect( 9 );
 
-	var step = 0,
+	var done = assert.async(),
+		step = 0,
 		dur = 50;
 
-	// assert? -> github.com/JamesMGreene/qunit-assert-step
 	jQuery( "#foo" ).animate( {
 		width: "5px"
 	}, {
 		duration: dur,
 		start: function() {
-			assert.step( 1 );
+			assert.step( "start" );
 		},
 		progress: function( anim, p, ms ) {
 			if ( !( step++ ) ) {
-				assert.step( 2 );
+				assert.step( "progress" );
 				assert.strictEqual( p, 0, "first progress callback: progress ratio" );
 				assert.strictEqual( ms, dur, "first progress callback: remaining ms" );
 			} else {
-				assert.step( 3 );
+				assert.step( "last progress" );
 				assert.strictEqual( p, 1, "last progress callback: progress ratio" );
 				assert.strictEqual( ms, 0, "last progress callback: remaining ms" );
 			}
 		},
 		done: function() {
-			assert.step( 4 );
+			assert.step( "done" );
 		},
 		fail: function() {
 			assert.ok( false, "Animation failed" );
 		},
 		always: function() {
-			assert.step( 5 );
+			assert.verifySteps( [ "start", "progress", "last progress", "done" ] );
+			done();
 		}
 	} ).finish();
 

@@ -1,4 +1,4 @@
-QUnit.module( "basic", { teardown: moduleTeardown } );
+QUnit.module( "basic", { afterEach: moduleTeardown } );
 
 if ( jQuery.ajax ) {
 QUnit.test( "ajax", function( assert ) {
@@ -193,7 +193,9 @@ QUnit.test( "manipulation", function( assert ) {
 	);
 } );
 
-QUnit.test( "offset", function( assert ) {
+// Support: jsdom 13.2+
+// jsdom returns 0 for offset-related properties
+QUnit[ /jsdom\//.test( navigator.userAgent ) ? "skip" : "test" ]( "offset", function( assert ) {
 	assert.expect( 3 );
 
 	var parent = jQuery( "<div style='position:fixed;top:20px;'/>" ).appendTo( "#qunit-fixture" ),

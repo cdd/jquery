@@ -1,6 +1,6 @@
 if ( jQuery.css ) {
 
-QUnit.module( "css", { teardown: moduleTeardown } );
+QUnit.module( "css", { afterEach: moduleTeardown } );
 
 QUnit.test( "css(String|Hash)", function( assert ) {
 	assert.expect( 42 );
@@ -641,6 +641,67 @@ QUnit.test( "show/hide detached nodes", function( assert ) {
 	span.remove();
 } );
 
+QUnit[
+	document.body.attachShadow && document.body.getRootNode ?
+		"test" :
+		"skip"
+	]( "show/hide shadow child nodes", function( assert ) {
+	assert.expect( 28 );
+	jQuery( "<div id='shadowHost'></div>" ).appendTo( "#qunit-fixture" );
+	var shadowHost = document.querySelector( "#shadowHost" );
+	var shadowRoot = shadowHost.attachShadow( { mode: "open" } );
+	shadowRoot.innerHTML = "" +
+		"<style>.hidden{display: none;}</style>" +
+		"<div class='hidden' id='shadowdiv'>" +
+		"	<p class='hidden' id='shadowp'>" +
+		"		<a href='#' class='hidden' id='shadowa'></a>" +
+		"	</p>" +
+		"	<code class='hidden' id='shadowcode'></code>" +
+		"	<pre class='hidden' id='shadowpre'></pre>" +
+		"	<span class='hidden' id='shadowspan'></span>" +
+		"</div>" +
+		"<table class='hidden' id='shadowtable'>" +
+		"	<thead class='hidden' id='shadowthead'>" +
+		"		<tr class='hidden' id='shadowtr'>" +
+		"			<th class='hidden' id='shadowth'></th>" +
+		"		</tr>" +
+		"	</thead>" +
+		"	<tbody class='hidden' id='shadowtbody'>" +
+		"		<tr class='hidden'>" +
+		"			<td class='hidden' id='shadowtd'></td>" +
+		"		</tr>" +
+		"	</tbody>" +
+		"</table>" +
+		"<ul class='hidden' id='shadowul'>" +
+		"	<li class='hidden' id='shadowli'></li>" +
+		"</ul>";
+
+	var test = {
+		"div": "block",
+		"p": "block",
+		"a": "inline",
+		"code": "inline",
+		"pre": "block",
+		"span": "inline",
+		"table": "table",
+		"thead": "table-header-group",
+		"tbody": "table-row-group",
+		"tr": "table-row",
+		"th": "table-cell",
+		"td": "table-cell",
+		"ul": "block",
+		"li": "list-item"
+	};
+
+	jQuery.each( test, function( selector, expected ) {
+		var shadowChild = shadowRoot.querySelector( "#shadow" + selector );
+		var $shadowChild = jQuery( shadowChild );
+		assert.strictEqual( $shadowChild.css( "display" ), "none", "is hidden" );
+		$shadowChild.show();
+		assert.strictEqual( $shadowChild.css( "display" ), expected, "Show using correct display type for " + selector );
+	} );
+} );
+
 QUnit.test( "hide hidden elements (bug #7141)", function( assert ) {
 	assert.expect( 3 );
 
@@ -966,6 +1027,33 @@ QUnit[ jQuery.find.compile && jQuery.fn.toggle ? "test" : "skip" ]( "detached to
 		"cascade-hidden element in detached tree" );
 } );
 
+QUnit[ jQuery.find.compile && jQuery.fn.toggle &&
+	document.body.attachShadow && document.body.getRootNode ?
+		"test" :
+		"skip"
+]( "shadow toggle()", function( assert ) {
+	assert.expect( 4 );
+	jQuery( "<div id='shadowHost'></div>" ).appendTo( "#qunit-fixture" );
+	var shadowHost = document.querySelector( "#shadowHost" );
+	var shadowRoot = shadowHost.attachShadow( { mode: "open" } );
+	shadowRoot.innerHTML = "" +
+		"<style>.hidden{display: none;}</style>" +
+		"<div id='shadowHiddenChild' class='hidden'></div>" +
+		"<div id='shadowChild'></div>";
+	var shadowChild = shadowRoot.querySelector( "#shadowChild" );
+	var shadowHiddenChild = shadowRoot.querySelector( "#shadowHiddenChild" );
+
+	var $shadowChild = jQuery( shadowChild );
+	assert.strictEqual( $shadowChild.css( "display" ), "block", "is visible" );
+	$shadowChild.toggle();
+	assert.strictEqual( $shadowChild.css( "display" ), "none", "is hidden" );
+
+	$shadowChild = jQuery( shadowHiddenChild );
+	assert.strictEqual( $shadowChild.css( "display" ), "none", "is hidden" );
+	$shadowChild.toggle();
+	assert.strictEqual( $shadowChild.css( "display" ), "block", "is visible" );
+} );
+
 QUnit.test( "jQuery.css(elem, 'height') doesn't clear radio buttons (bug #1095)", function( assert ) {
 	assert.expect( 4 );
 
@@ -1143,6 +1231,56 @@ QUnit.test( "Do not append px (#9548, #12990, #2792)", function( assert ) {
 	}
 } );
 
+
+QUnit[
+	jQuery( "<div/>" )[ 0 ].style.gridArea === "" ?
+	"test" :
+	"skip"
+]( "Do not append px to CSS Grid-related properties (gh-4007)", function( assert ) {
+	assert.expect( 12 );
+
+	var prop, value, subProp, subValue, $div,
+		gridProps = {
+			"grid-area": {
+				"grid-row-start": "2",
+				"grid-row-end": "auto",
+				"grid-column-start": "auto",
+				"grid-column-end": "auto"
+			},
+			"grid-column": {
+				"grid-column-start": "2",
+				"grid-column-end": "auto"
+			},
+			"grid-column-end": true,
+			"grid-column-start": true,
+			"grid-row": {
+				"grid-row-start": "2",
+				"grid-row-end": "auto"
+			},
+			"grid-row-end": true,
+			"grid-row-start": true
+		};
+
+	for ( prop in gridProps ) {
+		$div = jQuery( "<div/>" ).appendTo( "#qunit-fixture" );
+		$div.css( prop, 2 );
+
+		value = gridProps[ prop ];
+
+		if ( typeof value === "object" ) {
+			for ( subProp in value ) {
+				subValue = value[ subProp ];
+				assert.equal( $div.css( subProp ), subValue,
+					"Do not append px to '" + prop + "' (retrieved " + subProp + ")" );
+			}
+		} else {
+			assert.equal( $div.css( prop ), "2", "Do not append px to '" + prop + "'" );
+		}
+
+		$div.remove();
+	}
+} );
+
 QUnit.test( "css('width') and css('height') should respect box-sizing, see #11004", function( assert ) {
 	assert.expect( 4 );
 
@@ -1167,9 +1305,10 @@ testIframe(
 testIframe(
 	"css('width') should work correctly with browser zooming",
 	"css/cssWidthBrowserZoom.html",
-	function( assert, jQuery, window, document, cssWidthBrowserZoom ) {
-		assert.expect( 1 );
-		assert.strictEqual( cssWidthBrowserZoom, "100px", "elem.css('width') works correctly with browser zoom" );
+	function( assert, jQuery, window, document, widthBeforeSet, widthAfterSet ) {
+		assert.expect( 2 );
+		assert.strictEqual( widthBeforeSet, "100px", "elem.css('width') works correctly with browser zoom" );
+		assert.strictEqual( widthAfterSet, "100px", "elem.css('width', val) works correctly with browser zoom" );
 	}
 );
 
@@ -1324,7 +1463,7 @@ QUnit[ jQuery.find.compile ? "test" : "skip" ]( ":visible/:hidden selectors", fu
 	// Safari 6-7 and iOS 6-7 report 0 width for br elements
 	// When newer browsers propagate, re-enable this test
 	// $br = jQuery( "<br/>" ).appendTo( "#qunit-fixture" );
-	// ok( $br.is( ":visible" ), "br element is visible" );
+	// assert.ok( $br.is( ":visible" ), "br element is visible" );
 
 	$table = jQuery( "#table" );
 	$table.html( "<tr><td style='display:none'>cell</td><td>cell</td></tr>" );
@@ -1347,11 +1486,11 @@ QUnit.test( "Keep the last style if the new one isn't recognized by the browser 
 	assert.equal( el.css( "position" ), "absolute", "The old style is kept when setting an unrecognized value" );
 } );
 
-// Support: Edge 14 - 15
+// Support: Edge 14 - 16 only
 // Edge collapses whitespace-only values when setting a style property and
 // there is no easy way for us to work around it. Just skip the test there
 // and hope for the better future.
-QUnit[ /\bedge\//i.test( navigator.userAgent ) ? "skip" : "test" ](
+QUnit[ /\bedge\/16\./i.test( navigator.userAgent ) ? "skip" : "test" ](
 	"Keep the last style if the new one is a non-empty whitespace (gh-3204)",
 	function( assert ) {
 	assert.expect( 1 );
@@ -1372,8 +1511,8 @@ QUnit.test( "Reset the style if set to an empty string", function( assert ) {
 
 QUnit.test(
 	"Clearing a Cloned Element's Style Shouldn't Clear the Original Element's Style (#8908)",
-	24,
 	function( assert ) {
+		assert.expect( 24 );
 		var done = assert.async();
 		var styles = [ {
 				name: "backgroundAttachment",
@@ -1632,10 +1771,12 @@ QUnit.test( "Do not throw on frame elements from css method (#15098)", function(
 		assert.equal( div.css( "--color" ), "red", "Modified CSS custom property using object" );
 
 		div.css( { "--mixedCase": "green" } );
+		div.css( { "--mixed-case": "red" } );
 		assert.equal( div.css( "--mixedCase" ), "green",
 			"Modified CSS custom property with mixed case" );
 
 		div.css( { "--theme-dark": "purple" } );
+		div.css( { "--themeDark": "red" } );
 		assert.equal( div.css( "--theme-dark" ), "purple",
 			"Modified CSS custom property with dashed name" );
 
@@ -1655,6 +1796,21 @@ QUnit.test( "Do not throw on frame elements from css method (#15098)", function(
 			assert.equal( $elem.css( "--prop4" ), "\"val4\"", "Works with double quotes" );
 			assert.equal( $elem.css( "--prop5" ), "'val5'", "Works with single quotes" );
 		}
+	} );
+
+	QUnit[ supportsCssVars ? "test" : "skip" ]( "Don't append px to CSS vars", function( assert ) {
+		assert.expect( 3 );
+
+		var $div = jQuery( "<div>" ).appendTo( "#qunit-fixture" );
+
+		$div
+			.css( "--a", 3 )
+			.css( "--line-height", 4 )
+			.css( "--lineHeight", 5 );
+
+		assert.equal( $div.css( "--a" ), "3", "--a: 3" );
+		assert.equal( $div.css( "--line-height" ), "4", "--line-height: 4" );
+		assert.equal( $div.css( "--lineHeight" ), "5", "--lineHeight: 5" );
 	} );
 } )();
 

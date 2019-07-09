@@ -16,7 +16,7 @@ class MockServer {
 			header( 'Content-type: text/javascript' );
 		} else {
 			header( 'Content-type: text/html' );
-			echo 'ERROR <script>ok( true, "mock executed" );</script>';
+			echo 'ERROR <script>QUnit.assert.ok( true, "mock executed" );</script>';
 		}
 	}
 
@@ -54,7 +54,7 @@ class MockServer {
 		} else {
 			header( 'Content-type: text/html' );
 		}
-		echo 'ok( true, "mock executed" );';
+		echo 'QUnit.assert.ok( true, "mock executed" );';
 	}
 
 	// Used to be in test.js, but was renamed to testbar.php
@@ -62,7 +62,7 @@ class MockServer {
 	protected function testbar( $req ) {
 		echo 'this.testBar = "bar";
 jQuery("#ap").html("bar");
-ok( true, "mock executed");';
+QUnit.assert.ok( true, "mock executed");';
 	}
 
 	protected function json( $req ) {
@@ -114,6 +114,9 @@ ok( true, "mock executed");';
 		header( 'Sample-Header: Hello World' );
 		header( 'Empty-Header: ' );
 		header( 'Sample-Header2: Hello World 2' );
+		header( 'List-Header: Item 1' );
+		header( 'list-header: Item 2', FALSE );
+		header( 'constructor: prototype collision (constructor)' );
 
 		foreach ( explode( '|' , $req->query[ 'keys' ] ) as $key ) {
 			// Only echo if key exists in the header
@@ -193,6 +196,15 @@ ok( true, "mock executed");';
 		header( "Content-Security-Policy: default-src 'self'; report-uri ./mock.php?action=cspLog" );
 		header( 'Content-type: text/html' );
 		echo file_get_contents( __DIR__ . '/csp.include.html' );
+	}
+
+	protected function cspNonce( $req ) {
+		// This is CSP only for browsers with "Content-Security-Policy" header support
+		// i.e. no old WebKit or old Firefox
+		$test = $req->query['test'] ? '-' . $req->query['test'] : '';
+		header( "Content-Security-Policy: script-src 'nonce-jquery+hardcoded+nonce'; report-uri ./mock.php?action=cspLog" );
+		header( 'Content-type: text/html' );
+		echo file_get_contents( __DIR__ . '/csp-nonce' . $test . '.html' );
 	}
 
 	protected function cspLog( $req ) {
